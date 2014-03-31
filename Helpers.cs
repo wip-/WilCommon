@@ -135,6 +135,7 @@ namespace WilCommon
             return Math.Max(Math.Max(p1, p2), p3);
         }
 
+        // plot
         public static BitmapInfo ToBitmapInfo(this byte[] array)
         {
             BitmapInfo dest = new BitmapInfo(512, 512, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -156,6 +157,55 @@ namespace WilCommon
 
             return dest;
         }
+
+        public static BitmapInfo ToSnakeCurve(this double[] array, int size)
+        {
+            int binsCount = array.Length;
+
+            BitmapInfo bitmapInfo = new BitmapInfo(size, size, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            // render white background
+            for (var x = 0; x < size; ++x)
+                for (var y = 0; y < size; ++y)
+                    bitmapInfo.SetPixelColor(x, y, Color.White);
+
+            int binWidth = (int)Math.Floor((double)size / binsCount);
+            int margin = (size - binWidth * binsCount) / 2;
+
+            for (var i = 0; i < binsCount; ++i)
+            {
+                var s = array[i];
+                int yCurrent = (int)Helpers.Lerp(s, 0, 1, size - margin, margin);
+
+                for (var j = 0; j < binWidth; ++j)
+                {
+                    int x = margin + binWidth * i + j;
+                    bitmapInfo.SetPixelColor(x, yCurrent, Color.Black);
+                    if (j == (binWidth - 1) && i != (binsCount - 1))
+                    {
+                        var sNext = array[i + 1];
+                        int yNext = (int)Helpers.Lerp(sNext, 0, 1, size - margin, margin);
+                        int yStart = Math.Min(yCurrent, yNext);
+                        int yEnd = Math.Max(yCurrent, yNext);
+                        for (var y = yStart; y <= yEnd; ++y)
+                        {
+                            bitmapInfo.SetPixelColor(x, y, Color.Black);
+                        }
+                    }
+                }
+            }
+
+            return bitmapInfo;
+        }
+
+
+
+
+
+
+
+
+
+
 
 
     }
