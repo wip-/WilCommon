@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -271,6 +272,7 @@ namespace WilCommon
 
                     double x = (float)j/binWidth;
                     double y = CatmullRomSpline(x, v0, v1, v2, v3);
+                    y = y.Clamp(array.Min(), array.Max());
 
                     int yPixels = (int)Helpers.Lerp(y, 0, 1, size - margin, margin);
 
