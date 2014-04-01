@@ -67,7 +67,7 @@ namespace WilCommon
             {
                 factor = 1.0;
             }
-            else if ((wavelength >= 701) && (wavelength < 781))
+            else if ((wavelength >= 701) /*&& (wavelength < 781)*/ )
             {
                 factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 700);
             }
