@@ -158,11 +158,19 @@ namespace WilCommon
             return dest;
         }
 
-        public static BitmapInfo ToSnakeCurve(this double[] array, int size)
+
+        public struct WavelengthRange
+        {
+            public double Start;
+            public double End;
+        }
+
+        public static BitmapInfo ToSnakeCurve(this double[] array, int size, WavelengthRange? range = null)
         {
             int binsCount = array.Length;
 
             BitmapInfo bitmapInfo = new BitmapInfo(size, size, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
             // render white background
             for (var x = 0; x < size; ++x)
                 for (var y = 0; y < size; ++y)
@@ -173,12 +181,34 @@ namespace WilCommon
 
             for (var i = 0; i < binsCount; ++i)
             {
-                var s = array[i];
-                int yCurrent = (int)Helpers.Lerp(s, 0, 1, size - margin, margin);
+                var val = array[i];
+                int yCurrent = (int)Helpers.Lerp(val, 0, 1, size - margin, margin);
 
                 for (var j = 0; j < binWidth; ++j)
                 {
                     int x = margin + binWidth * i + j;
+
+                    if (range != null)
+                    {
+                        double lambda = Lerp(x, margin, size-margin, range.Value.Start, range.Value.End);
+                        Color bkg = Colors.FromWaveLength(lambda);
+                        float h = bkg.GetHue();
+                        float s = bkg.GetSaturation();
+                        float b = bkg.GetBrightness();
+
+                        Color top = Colors.FromAhsb(255, h, s, 0.75f);
+                        for (var y = margin; y <= yCurrent; ++y )
+                        {
+                            bitmapInfo.SetPixelColor(x, y, top);
+                        }
+
+                        Color bottom = Colors.FromAhsb(255, h, s, 0.50f);
+                        for (var y = yCurrent + 1; y <= size - margin; ++y)
+                        {
+                            bitmapInfo.SetPixelColor(x, y, bottom);
+                        }
+                    }
+
                     bitmapInfo.SetPixelColor(x, yCurrent, Color.Black);
                     if (j == (binWidth - 1) && i != (binsCount - 1))
                     {
