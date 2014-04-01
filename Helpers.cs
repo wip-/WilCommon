@@ -229,7 +229,78 @@ namespace WilCommon
 
 
 
+        // http://www.lighthouse3d.com/tutorials/maths/catmull-rom-spline/
+        public static double CatmullRomSpline(double x, double v0, double v1, double v2, double v3)
+        {
+            double c0 = +1.0 * v1;
+            double c1 = -0.5 * v0 + +0.5 * v2;
+            double c2 = +1.0 * v0 + -2.5 * v1 + +2.0 * v2 + -0.5 * v3;
+            double c3 = -0.5 * v0 + +1.5 * v1 + -1.5 * v2 + +0.5 * v3;
 
+            return ((c3 * x + c2) * x + c1) * x + c0;
+        }
+
+        public static BitmapInfo ToCatmullRomSpline(this double[] array, int size, WavelengthRange? range = null)
+        {
+            int binsCount = array.Length;
+
+            BitmapInfo bitmapInfo = new BitmapInfo(size, size, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            // render white background
+            for (var x = 0; x < size; ++x)
+                for (var y = 0; y < size; ++y)
+                    bitmapInfo.SetPixelColor(x, y, Color.White);
+
+            int binWidth = (int)Math.Floor((double)size / (binsCount-1));
+            int margin = (size - binWidth * (binsCount-1)) / 2;
+
+            // Points that are out of the chart, necessary to use Catmull-Rom (linearly extrapolated)
+            double v_1 = Lerp(-1, 0, 1, array[0], array[1] );
+            double v_N = Lerp(binsCount, binsCount - 2, binsCount - 1, array[binsCount - 2], array[binsCount-1]);
+
+            for (var i = 0; i < binsCount-1; ++i)
+            {
+                double v0 = (i==0)? v_1 : array[i-1];
+                double v1 = array[i];
+                double v2 = array[i+1];
+                double v3 = (i==binsCount-2)? v_N : array[i + 1];
+
+                for (var j = 0; j < binWidth; ++j)
+                {
+                    int xPixels = margin + binWidth * i + j;
+
+                    double x = (float)j/binWidth;
+                    double y = CatmullRomSpline(x, v0, v1, v2, v3);
+
+                    int yPixels = (int)Helpers.Lerp(y, 0, 1, size - margin, margin);
+
+                    if (range != null)
+                    {
+                        double lambda = Lerp(xPixels, margin, size - margin, range.Value.Start, range.Value.End);
+                        Color bkg = Colors.FromWaveLength(lambda);
+                        float h = bkg.GetHue();
+                        float s = bkg.GetSaturation();
+                        float b = bkg.GetBrightness();
+
+                        Color top = Colors.FromAhsb(255, h, s, 0.75f);
+                        for (var yTop = margin; yTop <= yPixels; ++yTop)
+                        {
+                            bitmapInfo.SetPixelColor(xPixels, yTop, top);
+                        }
+
+                        Color bottom = Colors.FromAhsb(255, h, s, 0.50f);
+                        for (var yBottom = yPixels + 1; yBottom <= size - margin; ++yBottom)
+                        {
+                            bitmapInfo.SetPixelColor(xPixels, yBottom, bottom);
+                        }
+                    }
+
+                    bitmapInfo.SetPixelColor(xPixels, yPixels, Color.Black);
+                }
+            }
+
+            return bitmapInfo;
+        }
 
 
 
