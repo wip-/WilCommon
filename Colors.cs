@@ -52,6 +52,7 @@ namespace WilCommon
             }
             else if ((wavelength >= 645) /*&& (wavelength < 781)*/ )
             {
+                wavelength = Math.Min(wavelength, 780);
                 r = 1.0;
                 g = 0.0;
                 b = 0.0;
